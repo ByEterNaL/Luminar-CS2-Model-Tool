@@ -1,0 +1,24 @@
+# Python & Virtual Env
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Temp Models & Archives
+temp_models/
+*.zip
+*.glb
+*.fbx
+*.mdl
+*.vmdl
+*.vmat
+*.exe
+
+# Secrets & IDE
+.env
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luminar CS2 Modding Tool</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind Configuration for Hacker Aesthetic -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0a0a0a',
+                        darker: '#050505',
+                        neon: '#00ff88',
+                        neonBlue: '#00e5ff',
+                        panel: '#151515'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                        mono: ['Fira Code', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 255, 136, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 229, 255, 0.04) 0%, transparent 50%);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ff88; }
+        
+        .glass-panel {
+            background: rgba(21, 21, 21, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        
+        /* Drag & Drop zone styles */
+        #drop-zone.dragover {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+            box-shadow: inset 0 0 20px rgba(0, 255, 136, 0.1);
+        }
+
+        /* 3D Canvas container */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none; /* Let clicks pass through if empty */
+        }
+        
+        /* When canvas is active, make it interactive */
+        #canvas-container.active {
+            pointer-events: auto;
+        }
+
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            pointer-events: none; /* Allow interaction with canvas beneath UI */
+        }
+        .ui-layer > * {
+            pointer-events: auto; /* Re-enable pointer events for specific UI elements */
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+        
+        .loader {
+            border-top-color: #00ff88;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <!-- Three.js Library -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body class="h-screen w-screen flex flex-col">
+    <!-- 3D Background Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div class="ui-layer flex flex-col h-full p-6">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-dark flex items-center justify-center border border-neon/30 shadow-[0_0_15px_rgba(0,255,136,0.2)]">
+                    <svg class="w-6 h-6 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wider neon-text font-mono uppercase">Luminar</h1>
+                    <p class="text-xs text-gray-400 font-mono">CS2 Modding Tool v1.0</p>
+                </div>
+            </div>
+            
+            <!-- Compile Button (Hidden initially) -->
+            <button id="btn-compile" class="hidden items-center gap-2 px-6 py-2.5 bg-neon/10 border border-neon text-neon font-medium rounded hover:bg-neon hover:text-darker transition-all duration-300 shadow-[0_0_15px_rgba(0,255,136,0.2)] uppercase tracking-wide text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Derle (Compile)
+            </button>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex items-center justify-center">
+            
+            <!-- Upload Panel -->
+            <div id="upload-panel" class="glass-panel rounded-xl p-8 max-w-lg w-full text-center transition-all duration-500 ease-in-out">
+                <h2 class="text-2xl font-light mb-2">Modelini Yükle</h2>
+                <p class="text-gray-400 text-sm mb-6">Source 2'ye portlamak için <b>.mdl</b>, .fbx, .obj, .smd veya <b>.zip (Klasör)</b> dosyanızı bırakın.</p>
+                
+                <div id="drop-zone" class="border-2 border-dashed border-gray-600 rounded-xl p-12 transition-all duration-300 cursor-pointer hover:border-neon hover:bg-white/5 flex flex-col items-center justify-center group">
+                    <svg class="w-12 h-12 text-gray-500 mb-4 group-hover:text-neon transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    <span class="text-gray-300 font-medium group-hover:text-white transition-colors">Sürükle ve Bırak</span>
+                    <span class="text-xs text-gray-500 mt-2">veya seçmek için tıklayın</span>
+                    <input type="file" id="file-input" class="hidden" accept=".mdl,.fbx,.obj,.smd,.zip">
+                </div>
+            </div>
+            
+            <!-- Loading Overlay -->
+            <div id="loading-panel" class="hidden flex-col items-center justify-center">
+                <div class="loader w-16 h-16 border-4 border-gray-700 border-t-neon rounded-full mb-6 mx-auto"></div>
+                <p id="loading-text" class="text-neon text-sm font-mono tracking-widest uppercase">İŞLENİYOR...</p>
+                <p id="loading-subtext" class="text-gray-500 text-xs mt-2 font-mono">Blender Origin sıfırlıyor ve GLB'ye dönüştürüyor</p>
+            </div>
+
+        </main>
+        
+        <!-- Footer / Logs -->
+        <footer class="mt-auto glass-panel p-4 rounded-lg flex items-center justify-between text-xs font-mono">
+            <div id="status-log" class="text-gray-400 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-gray-500" id="status-indicator"></span>
+                <span id="status-text">Sistem Hazır. Model bekleniyor...</span>
+            </div>
+            <div class="text-gray-500">
+                Blender Backend Aktif
+            </div>
+        </footer>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-20 right-6 glass-panel border-l-4 border-neonBlue px-6 py-4 rounded shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <p id="toast-msg" class="text-sm font-medium text-white"></p>
+    </div>
+
+    <!-- App Logic -->
+    <script type="module" src="app.js?v=4"></script>
+</body>
+</html>
